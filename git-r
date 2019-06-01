@@ -1,0 +1,153 @@
+#!/usr/bin/env bash
+### Git Fork Utility
+###
+### Usage:
+###  git-r <command>
+###
+### Commands:
+###  configure            Configure
+###  build                Creates SVN-REVISION and runs 'make'
+###  install
+###  svn-diff             Generate a SVN-compatible patch
+###  svn-patch            Apply svn-diff patch to SVN repos
+###
+### Options:
+###  --prefix-root <path> Installation directory.
+###                       (default: '$HOME/software/R-devel')
+###  --verbose            Output extra information
+###  --version            Display version
+###
+### Example:
+###  git r debug
+###
+###  git checkout R-3-6-branch
+###  git r configure --enable-R-shlib --enable-memory-profiling --without-recommended-packages
+###  git-r build
+###  git-r install
+###
+###  git-r svn-diff
+###  git-r svn-patch
+###  svn diff
+###
+### Version: 0.0.1-9002
+### Copyright: Henrik Bengtsson (2017-2019)
+### License: GPL (>= 2.1) [https://www.gnu.org/licenses/gpl.html]
+call="$0 $*"
+
+function mecho() { echo "$@" 1>&2; }
+
+function mdebug() {
+    if [[ $debug == TRUE ]]; then
+        mecho "[DEBUG] $@";
+    fi
+}
+
+function vecho() {
+    if [[ $verbose == TRUE ]]; then
+        echo "$@";
+    fi
+}
+
+function version() {
+    grep -E "^###[ ]*Version:[ ]*" $0 | sed 's/###[ ]*Version:[ ]*//g'
+}
+
+function help() {
+    local res=$(grep "^###" $0 | grep -vE '^(####|### whatis: )' | cut -b 5-)
+    if [[ ${UCSF_TOOLS} == true ]]; then
+        res=$(printf '%s\n' "${res[@]}" | sed 's/git-fork/git fork/')
+    fi
+    printf '%s\n' "${res[@]}"
+}
+
+
+## Variables
+prefix_root="$HOME/software/R-devel"
+opts=
+verbose=TRUE
+cmd=help
+
+if [[ $# -eq 0 ]]; then
+    help
+    exit 0
+fi
+
+# Parse command-line options
+while [[ $# > 0 ]]; do
+    if [[ "$1" == "--help" ]]; then
+        help
+	exit 0
+    elif [[ "$1" == "--version" ]]; then
+        version
+	exit 0
+    elif [[ "$1" == "--verbose" ]]; then
+        verbose=TRUE
+    elif [[ "$1" == "--no-verbose" ]]; then
+        verbose=FALSE
+    elif [[ "$1" == "--prefix-root" ]]; then
+	shift
+        prefix_root="$1"
+    elif [[ "$1" == "configure" ]]; then
+	cmd="configure"
+    elif [[ "$1" == "build" ]]; then
+	cmd="build"
+    elif [[ "$1" == "install" ]]; then
+	cmd="install"
+    elif [[ "$1" == "svn-diff" ]]; then
+	cmd="svn-diff"
+    elif [[ "$1" == "svn-patch" ]]; then
+	cmd="svn-patch"
+    elif [[ "$1" == "debug" ]]; then
+	cmd="debug"
+    else
+        opts="$opts $1"
+    fi
+    shift
+done
+
+function git_branch() {
+    git symbolic-ref HEAD | sed 's!refs\/heads\/!!'
+}
+
+vecho "Command: $cmd"
+vecho "Options: $opts"
+
+branch=$(git_branch)
+vecho "Current branch: $branch"
+vecho "Prefix root: $prefix_root"
+prefix="$prefix_root/$branch"
+vecho "Prefix: $prefix"
+
+if [[ "$cmd" == "configure" ]]; then
+    ./configure --prefix="$prefix" $opts
+    sed -n '/^R is now configured/,/^## -----/p' config.log | head -n -2 > config.log.summary
+fi				    
+
+if [[ "$cmd" == "build" ]]; then
+    (cd doc/manual && make front-matter html-non-svn)
+    printf "Revision: %s\nLast Changed Date: %s\n" `git log trunk --format=%B -n 1 | tr '\n' ' ' | sed -E 's/.*git-svn-id: https:\/\/svn.r-project.org\/R\/[^@]*@([0-9]+).*/\1/'` `git log trunk -1 --pretty=format:"%ad" --date=iso | sed -E 's/ .*//'` > SVN-REVISION
+    make
+fi				    
+
+if [[ "$cmd" == "install" ]]; then
+    make install
+    res=$?
+    if [[ $res -ne 0 ]]; then
+	echo "ERROR: R failed to install (exit code $res)"
+	exit $res
+    fi
+    
+    echo "R successfully installed: $prefix"
+fi				    
+
+
+if [[ "$cmd" == "svn-diff" ]]; then
+    ## In Git repos
+    git diff --diff-filter=M --no-prefix trunk > /tmp/r-trunk.patch
+    mecho "SVN-compatible patch to trunk written to /tmp/r-trunk.patch:"
+    git diff --diff-filter=M --no-prefix trunk
+fi
+
+if [[ "$cmd" == "svn-patch" ]]; then
+    patch -p0 < /tmp/r-trunk.patch
+fi
