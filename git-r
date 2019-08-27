@@ -125,7 +125,7 @@ fi
 
 if [[ "$cmd" == "build" ]]; then
     (cd doc/manual && make front-matter html-non-svn)
-    printf "Revision: %s\nLast Changed Date: %s\n" `git log trunk --format=%B -n 1 | tr '\n' ' ' | sed -E 's/.*git-svn-id: https:\/\/svn.r-project.org\/R\/[^@]*@([0-9]+).*/\1/'` `git log trunk -1 --pretty=format:"%ad" --date=iso | sed -E 's/ .*//'` > SVN-REVISION
+    printf "Revision: %s\nLast Changed Date: %s\n" "$(git log --format=%B -n 1 | tr '\n' ' ' | sed -E 's/.*git-svn-id: https:\/\/svn.r-project.org\/R\/[^@]*@([0-9]+).*/\1/')" "$(git log -1 --pretty=format:"%ad" --date=iso | sed -E 's/ .*//')" > SVN-REVISION
     make
 fi				    
 
