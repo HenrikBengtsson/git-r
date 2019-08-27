@@ -6,7 +6,8 @@
 ###
 ### Commands:
 ###  configure            Configure
-###  build                Creates SVN-REVISION and runs 'make'
+###  svn-revision         Update and display SVN-VERSION
+###  build                Update SVN-REVISION and runs 'make'
 ###  install
 ###  svn-diff             Generate a SVN-compatible patch
 ###  svn-patch            Apply svn-diff patch to SVN repos
@@ -88,17 +89,19 @@ while [[ $# > 0 ]]; do
 	shift
         prefix_root="$1"
     elif [[ "$1" == "configure" ]]; then
-	cmd="configure"
+	cmd="$1"
     elif [[ "$1" == "build" ]]; then
-	cmd="build"
+	cmd="$1"
+    elif [[ "$1" == "svn-revision" ]]; then
+	cmd="$1"
     elif [[ "$1" == "install" ]]; then
-	cmd="install"
+	cmd="$1"
     elif [[ "$1" == "svn-diff" ]]; then
-	cmd="svn-diff"
+	cmd="$1"
     elif [[ "$1" == "svn-patch" ]]; then
-	cmd="svn-patch"
+	cmd="$1"
     elif [[ "$1" == "debug" ]]; then
-	cmd="debug"
+	cmd="$1"
     else
         opts="$opts $1"
     fi
@@ -109,6 +112,10 @@ function git_branch() {
     git symbolic-ref HEAD | sed 's!refs\/heads\/!!'
 }
 
+function update_svn_revision() {
+    printf "Revision: %s\nLast Changed Date: %s\n" "$(git log --format=%B -n 1 | tr '\n' ' ' | sed -E 's/.*git-svn-id: https:\/\/svn.r-project.org\/R\/[^@]*@([0-9]+).*/\1/')" "$(git log -1 --pretty=format:"%ad" --date=iso | sed -E 's/ .*//')" > SVN-REVISION
+}    
+
 vecho "Command: $cmd"
 vecho "Options: $opts"
 
@@ -118,14 +125,24 @@ vecho "Prefix root: $prefix_root"
 prefix="$prefix_root/$branch"
 vecho "Prefix: $prefix"
 
+if [[ ! -f src/library/base/DESCRIPTION.in ]]; then
+    echo "ERROR: Current folder does not look like it holds the R source code: $PWD"
+    exit 1
+fi
+
 if [[ "$cmd" == "configure" ]]; then
     ./configure --prefix="$prefix" $opts
     sed -n '/^R is now configured/,/^## -----/p' config.log | head -n -2 > config.log.summary
 fi				    
 
+if [[ "$cmd" == "svn-revision" ]]; then
+    update_svn_revision
+    cat SVN-REVISION
+fi				    
+
 if [[ "$cmd" == "build" ]]; then
+    update_svn_revision
     (cd doc/manual && make front-matter html-non-svn)
-    printf "Revision: %s\nLast Changed Date: %s\n" "$(git log --format=%B -n 1 | tr '\n' ' ' | sed -E 's/.*git-svn-id: https:\/\/svn.r-project.org\/R\/[^@]*@([0-9]+).*/\1/')" "$(git log -1 --pretty=format:"%ad" --date=iso | sed -E 's/ .*//')" > SVN-REVISION
     make
 fi				    
 
