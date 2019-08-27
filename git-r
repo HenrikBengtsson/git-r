@@ -2,24 +2,25 @@
 ### Git Fork Utility
 ###
 ### Usage:
-###  git-r <command>
+###  git-r [options]* <command>
 ###
 ### Commands:
-###  configure            Configure
-###  svn-revision         Update and display SVN-VERSION
-###  build                Update SVN-REVISION and runs 'make'
+###  configure              Configure
+###  svn-revision           Update and display SVN-VERSION
+###  build                  Update SVN-REVISION and runs 'make'
 ###  install
-###  svn-diff             Generate a SVN-compatible patch
-###  svn-patch            Apply svn-diff patch to SVN repos
+###  svn-diff               Generate a SVN-compatible patch
+###  svn-patch              Apply svn-diff patch to SVN repos
 ###
 ### Options:
-###  --prefix-root <path> Installation directory.
-###                       (default: '$HOME/software/R-devel')
-###  --verbose            Output extra information
-###  --version            Display version
+###  --prefix-root <path>   Installation directory.
+###                         (default: '$HOME/software/R-devel')
+###  --verbose/--no-verbose Control output of extra information
+###  --version              Display version
 ###
 ### Example:
-###  git r debug
+###  git checkout tags/R-3-6-1
+###  git svn-revision
 ###
 ###  git checkout R-3-6-branch
 ###  git r configure --enable-R-shlib --enable-memory-profiling --without-recommended-packages
@@ -30,31 +31,24 @@
 ###  git-r svn-patch
 ###  svn diff
 ###
-### Version: 0.0.1-9002
+### Version: 0.0.1-9003
 ### Copyright: Henrik Bengtsson (2017-2019)
 ### License: GPL (>= 2.1) [https://www.gnu.org/licenses/gpl.html]
-call="$0 $*"
-
 function mecho() { echo "$@" 1>&2; }
 
-function mdebug() {
-    if [[ $debug == TRUE ]]; then
-        mecho "[DEBUG] $@";
-    fi
-}
-
 function vecho() {
-    if [[ $verbose == TRUE ]]; then
+    if $verbose; then
         echo "$@";
     fi
 }
 
 function version() {
-    grep -E "^###[ ]*Version:[ ]*" $0 | sed 's/###[ ]*Version:[ ]*//g'
+    grep -E "^###[ ]*Version:[ ]*" "$0" | sed 's/###[ ]*Version:[ ]*//g'
 }
 
 function help() {
-    local res=$(grep "^###" $0 | grep -vE '^(####|### whatis: )' | cut -b 5-)
+    local res
+    res=$(grep "^###" "$0" | grep -vE '^(####|### whatis: )' | cut -b 5-)
     if [[ ${UCSF_TOOLS} == true ]]; then
         res=$(printf '%s\n' "${res[@]}" | sed 's/git-fork/git fork/')
     fi
@@ -65,7 +59,7 @@ function help() {
 ## Variables
 prefix_root="$HOME/software/R-devel"
 opts=
-verbose=TRUE
+verbose=true
 cmd=help
 skip_svn_revision=false
 
@@ -75,7 +69,7 @@ if [[ $# -eq 0 ]]; then
 fi
 
 # Parse command-line options
-while [[ $# > 0 ]]; do
+while [[ $# -gt 0 ]]; do
     if [[ "$1" == "--help" ]]; then
         help
 	exit 0
@@ -83,9 +77,9 @@ while [[ $# > 0 ]]; do
         version
 	exit 0
     elif [[ "$1" == "--verbose" ]]; then
-        verbose=TRUE
+        verbose=true
     elif [[ "$1" == "--no-verbose" ]]; then
-        verbose=FALSE	
+        verbose=false	
     elif [[ "$1" == "--prefix-root" ]]; then
 	shift
         prefix_root="$1"
@@ -102,8 +96,6 @@ while [[ $# > 0 ]]; do
     elif [[ "$1" == "svn-diff" ]]; then
 	cmd="$1"
     elif [[ "$1" == "svn-patch" ]]; then
-	cmd="$1"
-    elif [[ "$1" == "debug" ]]; then
 	cmd="$1"
     else
         opts="$opts $1"
@@ -136,7 +128,7 @@ if [[ ! -f src/library/base/DESCRIPTION.in ]]; then
 fi
 
 if [[ "$cmd" == "configure" ]]; then
-    ./configure --prefix="$prefix" $opts
+    ./configure --prefix="$prefix" "$opts"
     sed -n '/^R is now configured/,/^## -----/p' config.log | head -n -2 > config.log.summary
 fi				    
 
