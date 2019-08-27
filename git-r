@@ -67,6 +67,7 @@ prefix_root="$HOME/software/R-devel"
 opts=
 verbose=TRUE
 cmd=help
+skip_svn_revision=false
 
 if [[ $# -eq 0 ]]; then
     help
@@ -84,10 +85,12 @@ while [[ $# > 0 ]]; do
     elif [[ "$1" == "--verbose" ]]; then
         verbose=TRUE
     elif [[ "$1" == "--no-verbose" ]]; then
-        verbose=FALSE
+        verbose=FALSE	
     elif [[ "$1" == "--prefix-root" ]]; then
 	shift
         prefix_root="$1"
+    elif [[ "$1" == "--skip-svn-revision" ]]; then
+	skip_svn_revision=true
     elif [[ "$1" == "configure" ]]; then
 	cmd="$1"
     elif [[ "$1" == "build" ]]; then
@@ -113,7 +116,9 @@ function git_branch() {
 }
 
 function update_svn_revision() {
-    printf "Revision: %s\nLast Changed Date: %s\n" "$(git log --format=%B -n 1 | tr '\n' ' ' | sed -E 's/.*git-svn-id: https:\/\/svn.r-project.org\/R\/[^@]*@([0-9]+).*/\1/')" "$(git log -1 --pretty=format:"%ad" --date=iso | sed -E 's/ .*//')" > SVN-REVISION
+    if [ ! -f SVN-REVISION ] || ! $skip_svn_revision; then
+        printf "Revision: %s\nLast Changed Date: %s\n" "$(git log --format=%B -n 1 | tr '\n' ' ' | sed -E 's/.*git-svn-id: https:\/\/svn.r-project.org\/R\/[^@]*@([0-9]+).*/\1/')" "$(git log -1 --pretty=format:"%ad" --date=iso | sed -E 's/ .*//')" > SVN-REVISION
+    fi
 }    
 
 vecho "Command: $cmd"
