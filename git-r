@@ -128,7 +128,7 @@ if [[ ! -f src/library/base/DESCRIPTION.in ]]; then
 fi
 
 if [[ "$cmd" == "configure" ]]; then
-    ./configure --prefix="$prefix" "$opts"
+    ./configure --prefix="$prefix" $opts
     sed -n '/^R is now configured/,/^## -----/p' config.log | head -n -2 > config.log.summary
 fi				    
 
