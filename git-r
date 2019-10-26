@@ -109,7 +109,15 @@ function git_branch() {
 
 function update_svn_revision() {
     if [ ! -f SVN-REVISION ] || ! $skip_svn_revision; then
-        printf "Revision: %s\nLast Changed Date: %s\n" "$(git log --format=%B -n 1 | tr '\n' ' ' | sed -E 's/.*git-svn-id: https:\/\/svn.r-project.org\/R\/[^@]*@([0-9]+).*/\1/')" "$(git log -1 --pretty=format:"%ad" --date=iso | sed -E 's/ .*//')" > SVN-REVISION
+	revision=$(git log --format=%B -n 1 | grep -F "git-svn-id")
+	suffix=""
+	if [[ -z "$revision" ]]; then
+	    revision=$(git log --format=%B -n 50 | grep -F "git-svn-id" | head -1)
+	    suffix="-9000"
+        fi
+        revision=$(echo "$revision" | sed -E 's/.*git-svn-id: https:\/\/svn.r-project.org\/R\/[^@]*@([0-9]+).*/\1/')
+        revision="${revision}${suffix}"
+        printf "Revision: %s\nLast Changed Date: %s\n" "$revision" "$(git log -1 --pretty=format:"%ad" --date=iso | sed -E 's/ .*//')" > SVN-REVISION
     fi
 }    
 
