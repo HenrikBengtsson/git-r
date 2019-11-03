@@ -7,7 +7,9 @@
 ### Commands:
 ###  configure              Configure
 ###  svn-revision           Update and display SVN-VERSION
+###  pull-recommended       Download (rsync) recommended packages
 ###  build                  Update SVN-REVISION and runs 'make'
+###  build-recommended      Build recommended packages
 ###  install
 ###  svn-diff               Generate a SVN-compatible patch
 ###  svn-patch              Apply svn-diff patch to SVN repos
@@ -23,7 +25,14 @@
 ###  git svn-revision
 ###
 ###  git checkout R-3-6-branch
-###  git r configure --enable-R-shlib --enable-memory-profiling --without-recommended-packages
+###  git-r pull-recommended
+###  git-r configure --enable-R-shlib --enable-memory-profiling
+###  git-r build
+###  git-r build-recommended
+###  git-r install
+###
+###  git checkout trunk
+###  git-r configure --enable-R-shlib --enable-memory-profiling --without-recommended-packages
 ###  git-r build
 ###  git-r install
 ###
@@ -89,6 +98,10 @@ while [[ $# -gt 0 ]]; do
 	cmd="$1"
     elif [[ "$1" == "build" ]]; then
 	cmd="$1"
+    elif [[ "$1" == "pull-recommended" ]]; then
+	cmd="$1"
+    elif [[ "$1" == "build-recommended" ]]; then
+	cmd="$1"
     elif [[ "$1" == "svn-revision" ]]; then
 	cmd="$1"
     elif [[ "$1" == "install" ]]; then
@@ -145,11 +158,21 @@ if [[ "$cmd" == "svn-revision" ]]; then
     cat SVN-REVISION
 fi				    
 
+if [[ "$cmd" == "pull-recommended" ]]; then
+    ./tools/rsync-recommended
+fi
+
 if [[ "$cmd" == "build" ]]; then
     update_svn_revision
     (cd doc/manual && make front-matter html-non-svn)
     make
 fi				    
+
+if [[ "$cmd" == "build-recommended" ]]; then
+    ./tools/rsync-recommended
+    make recommended
+fi    
+
 
 if [[ "$cmd" == "install" ]]; then
     make install
