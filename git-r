@@ -40,6 +40,10 @@
 ###  git-r svn-patch
 ###  svn diff
 ###
+###
+### References:
+### * https://bookdown.org/lionel/contributing/building-r.html
+###
 ### Version: 0.0.1-9003
 ### Copyright: Henrik Bengtsson (2017-2019)
 ### License: GPL (>= 2.1) [https://www.gnu.org/licenses/gpl.html]
@@ -67,6 +71,7 @@ function help() {
 
 ## Variables
 prefix_root="$HOME/software/R-devel"
+build_root="./build"
 opts=
 verbose=true
 cmd=help
@@ -120,28 +125,71 @@ function git_branch() {
     git symbolic-ref HEAD | sed 's!refs\/heads\/!!'
 }
 
+function git_svn_revision() {
+    revision=$(git log --format=%B -n 1 | grep -F "git-svn-id")
+    suffix=""
+    if [[ -z "$revision" ]]; then
+        revision=$(git log --format=%B -n 50 | grep -F "git-svn-id" | head -1)
+	suffix="-9000"
+    fi
+    revision=$(echo "$revision" | sed -E 's/.*git-svn-id: https:\/\/svn.r-project.org\/R\/[^@]*@([0-9]+).*/\1/')
+    echo "$revision$suffix"
+}    
+
+function git_date() {
+    git log -1 --pretty=format:"%ad" --date=iso | sed -E 's/ .*//'
+}
+
 function update_svn_revision() {
     if [ ! -f SVN-REVISION ] || ! $skip_svn_revision; then
-	revision=$(git log --format=%B -n 1 | grep -F "git-svn-id")
-	suffix=""
-	if [[ -z "$revision" ]]; then
-	    revision=$(git log --format=%B -n 50 | grep -F "git-svn-id" | head -1)
-	    suffix="-9000"
-        fi
-        revision=$(echo "$revision" | sed -E 's/.*git-svn-id: https:\/\/svn.r-project.org\/R\/[^@]*@([0-9]+).*/\1/')
-        revision="${revision}${suffix}"
-        printf "Revision: %s\nLast Changed Date: %s\n" "$revision" "$(git log -1 --pretty=format:"%ad" --date=iso | sed -E 's/ .*//')" > SVN-REVISION
+	revision=$(git_svn_revision)
+        printf "Revision: %s\nLast Changed Date: %s\n" "$revision" "$(git_date)" > SVN-REVISION
     fi
 }    
 
-vecho "Command: $cmd"
-vecho "Options: $opts"
+function add_make.SVN-REVISION() {
+    {
+        echo "#! /usr/bin/env bash"
+	echo
+        echo "## Don't edit - automatically added by git-r"
+        echo      
+        echo 'revision=$(git log --format=%B -n 1 | grep -F "git-svn-id")'
+        echo 'suffix=""'
+        echo 'if [[ -z "$revision" ]]; then'
+        echo '    revision=$(git log --format=%B -n 50 | grep -F "git-svn-id" | head -1)'
+        echo 'suffix="-9000"'
+        echo 'fi'
+        echo 'revision=$(echo "$revision" | sed -E "s/.*git-svn-id: https:\/\/svn.r-project.org\/R\/[^@]*@([0-9]+).*/\1/")'
+        echo 'printf "Revision: %s\nLast Changed Date: %s\n" "$revision$suffix" "$(git log -1 --pretty=format:"%ad" --date=iso | sed -E "s/ .*//")" > SVN-REVISION'
+    } > make.SVN-REVISION
+    chmod ugo+x make.SVN-REVISION
+}
+
+function add_GNUmakefile() {
+    {
+        echo "## Don't edit - automatically added by git-r"
+        echo
+        echo "include Makefile"
+        echo
+        echo "svnonly:"
+        printf "\t@echo Generating SVN-REVISION file && ./make.SVN-REVISION"
+    } > GNUmakefile
+    add_make.SVN-REVISION
+}
 
 branch=$(git_branch)
-vecho "Current branch: $branch"
-vecho "Prefix root: $prefix_root"
 prefix="$prefix_root/$branch"
+build_path="$build_root/$branch"
+
+## DEBUG DETAILS
+vecho "Command: $cmd"
+vecho "Options: $opts"
+vecho "Branch: $branch"
+vecho "Revision: $(git_svn_revision)"
+vecho "Date: $(git_date)"
+vecho "Prefix root: $prefix_root"
 vecho "Prefix: $prefix"
+vecho "Build path: $build_path"
 
 if [[ ! -f src/library/base/DESCRIPTION.in ]]; then
     echo "ERROR: Current folder does not look like it holds the R source code: $PWD"
@@ -149,32 +197,43 @@ if [[ ! -f src/library/base/DESCRIPTION.in ]]; then
 fi
 
 if [[ "$cmd" == "configure" ]]; then
-    ./configure --prefix="$prefix" $opts
+    mkdir -p "$build_path"
+    cd "$build_path"
+    ../../configure --prefix="$prefix" $opts
     sed -n '/^R is now configured/,/^## -----/p' config.log | head -n -2 > config.log.summary
 fi				    
 
 if [[ "$cmd" == "svn-revision" ]]; then
+    mkdir -p "$build_path"
+    cd "$build_path"
     update_svn_revision
     cat SVN-REVISION
 fi				    
 
 if [[ "$cmd" == "pull-recommended" ]]; then
-    ./tools/rsync-recommended
+    mkdir -p "$build_path"
+    cd "$build_path"
+    ../../tools/rsync-recommended
 fi
 
 if [[ "$cmd" == "build" ]]; then
-    update_svn_revision
-    (cd doc/manual && make front-matter html-non-svn)
+    cd "$build_path"
+    add_GNUmakefile
+#    update_svn_revision
+#    (cd doc/manual && make front-matter html-non-svn)
     make
 fi				    
 
 if [[ "$cmd" == "build-recommended" ]]; then
-    ./tools/rsync-recommended
+    mkdir -p "$build_path"
+    cd "$build_path"
+    ../../tools/rsync-recommended
     make recommended
 fi    
 
 
 if [[ "$cmd" == "install" ]]; then
+    cd "$build_path"
     make install
     res=$?
     if [[ $res -ne 0 ]]; then
