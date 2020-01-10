@@ -179,7 +179,8 @@ function add_GNUmakefile() {
 
 branch=$(git_branch)
 prefix="$prefix_root/$branch"
-build_path="$build_root/$branch"
+branch_flat=$(echo "$branch" | tr '/' '-')
+build_path="$build_root/$branch_flat"
 
 ## DEBUG DETAILS
 vecho "Command: $cmd"
