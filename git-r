@@ -21,6 +21,8 @@
 ###  --version              Display version
 ###
 ### Example:
+###  git clone https://github.com/wch/r-source.git
+###  cd r-source
 ###  git checkout tags/R-3-6-1
 ###  git svn-revision
 ###
@@ -248,9 +250,9 @@ fi
 
 if [[ "$cmd" == "svn-diff" ]]; then
     ## In Git repos
-    git diff --diff-filter=M --no-prefix trunk > /tmp/r-trunk.patch
+    git diff --diff-filter=MAD --no-prefix trunk > /tmp/r-trunk.patch
     mecho "SVN-compatible patch to trunk written to /tmp/r-trunk.patch:"
-    git diff --diff-filter=M --no-prefix trunk
+    git diff --diff-filter=MAD --no-prefix trunk
 fi
 
 if [[ "$cmd" == "svn-patch" ]]; then
