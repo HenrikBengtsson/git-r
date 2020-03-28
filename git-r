@@ -13,6 +13,7 @@
 ###  install
 ###  svn-diff               Generate a SVN-compatible patch
 ###  svn-patch              Apply svn-diff patch to SVN repos
+###  prefix                 Output installation path
 ###
 ### Options:
 ###  --prefix-root <path>   Installation directory.
@@ -23,10 +24,10 @@
 ### Example:
 ###  git clone https://github.com/wch/r-source.git
 ###  cd r-source
-###  git checkout tags/R-3-6-1
+###  git checkout tags/R-3-6-3
 ###  git svn-revision
 ###
-###  git checkout R-3-6-branch
+###  git checkout R-4-0-branch
 ###  git-r pull-recommended
 ###  git-r configure --enable-R-shlib --enable-memory-profiling
 ###  git-r build
@@ -36,7 +37,7 @@
 ###  git checkout trunk
 ###  git-r configure --enable-R-shlib --enable-memory-profiling --without-recommended-packages
 ###  git-r build
-###  git-r install
+###  git-r install --protect
 ###
 ###  git-r svn-diff
 ###  git-r svn-patch
@@ -53,7 +54,7 @@ function mecho() { echo "$@" 1>&2; }
 
 function vecho() {
     if $verbose; then
-        echo "$@";
+        mecho "$@"
     fi
 }
 
@@ -78,6 +79,7 @@ opts=
 verbose=true
 cmd=help
 skip_svn_revision=false
+protect=false
 
 if [[ $# -eq 0 ]]; then
     help
@@ -96,6 +98,10 @@ while [[ $# -gt 0 ]]; do
         verbose=true
     elif [[ "$1" == "--no-verbose" ]]; then
         verbose=false	
+    elif [[ "$1" == "--protect" ]]; then
+        protect=true
+    elif [[ "$1" == "--no-protect" ]]; then
+        protect=false	
     elif [[ "$1" == "--prefix-root" ]]; then
 	shift
         prefix_root="$1"
@@ -112,6 +118,8 @@ while [[ $# -gt 0 ]]; do
     elif [[ "$1" == "svn-revision" ]]; then
 	cmd="$1"
     elif [[ "$1" == "install" ]]; then
+	cmd="$1"
+    elif [[ "$1" == "prefix" ]]; then
 	cmd="$1"
     elif [[ "$1" == "svn-diff" ]]; then
 	cmd="$1"
@@ -237,16 +245,23 @@ fi
 
 if [[ "$cmd" == "install" ]]; then
     cd "$build_path"
+    chmod u+w -R "$prefix"
     make install
     res=$?
     if [[ $res -ne 0 ]]; then
 	echo "ERROR: R failed to install (exit code $res)"
 	exit $res
     fi
-    
+    if $protect; then
+	mecho "Making installation read-only: $prefix"
+        chmod ugo-w -R "$prefix"
+    fi
     echo "R successfully installed: $prefix"
 fi				    
 
+if [[ "$cmd" == "prefix" ]]; then
+    echo "$prefix"
+fi
 
 if [[ "$cmd" == "svn-diff" ]]; then
     ## In Git repos
