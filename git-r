@@ -43,12 +43,18 @@
 ###  git-r svn-patch
 ###  svn diff
 ###
+### Required System Libraries:
+### * Ubuntu 18.04:
+###   sudo apt install xorg-dev libpcre2-dev libcurl4-openssl-dev
+###   sudo apt install libreadline-dev libbz2-dev liblzma-dev
+###   sudo apt install libjpeg-dev libtiff-dev libcairo2-dev
+###   sudo apt install openjdk-11-jdk
 ###
 ### References:
 ### * https://bookdown.org/lionel/contributing/building-r.html
 ###
-### Version: 0.0.1-9003
-### Copyright: Henrik Bengtsson (2017-2019)
+### Version: 0.0.1-9004
+### Copyright: Henrik Bengtsson (2017-2020)
 ### License: GPL (>= 2.1) [https://www.gnu.org/licenses/gpl.html]
 function mecho() { echo "$@" 1>&2; }
 
