@@ -85,7 +85,7 @@ opts=
 verbose=true
 cmd=help
 skip_svn_revision=false
-protect=false
+protect=true
 
 if [[ $# -eq 0 ]]; then
     help
