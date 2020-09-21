@@ -197,6 +197,7 @@ branch=$(git_branch)
 prefix="$prefix_root/$branch"
 branch_flat=$(echo "$branch" | tr '/' '-')
 build_path="$build_root/$branch_flat"
+mkdir -p "$build_path"
 
 ## DEBUG DETAILS
 vecho "Command: $cmd"
@@ -218,6 +219,7 @@ if [[ "$cmd" == "configure" ]]; then
     cd "$build_path"
     ../../configure --prefix="$prefix" $opts
     sed -n '/^R is now configured/,/^## -----/p' config.log | head -n -2 > config.log.summary
+    exit 0
 fi				    
 
 if [[ "$cmd" == "svn-revision" ]]; then
@@ -225,12 +227,14 @@ if [[ "$cmd" == "svn-revision" ]]; then
     cd "$build_path"
     update_svn_revision
     cat SVN-REVISION
+    exit 0
 fi				    
 
 if [[ "$cmd" == "pull-recommended" ]]; then
     mkdir -p "$build_path"
     cd "$build_path"
     ../../tools/rsync-recommended
+    exit 0
 fi
 
 if [[ "$cmd" == "build" ]]; then
@@ -239,6 +243,7 @@ if [[ "$cmd" == "build" ]]; then
 #    update_svn_revision
 #    (cd doc/manual && make front-matter html-non-svn)
     make
+    exit 0
 fi				    
 
 if [[ "$cmd" == "build-recommended" ]]; then
@@ -246,6 +251,7 @@ if [[ "$cmd" == "build-recommended" ]]; then
     cd "$build_path"
     ../../tools/rsync-recommended
     make recommended
+    exit 0
 fi    
 
 
@@ -263,10 +269,12 @@ if [[ "$cmd" == "install" ]]; then
         chmod ugo-w -R "$prefix"
     fi
     echo "R successfully installed: $prefix"
+    exit 0
 fi				    
 
 if [[ "$cmd" == "prefix" ]]; then
     echo "$prefix"
+    exit 0
 fi
 
 if [[ "$cmd" == "svn-diff" ]]; then
@@ -274,8 +282,15 @@ if [[ "$cmd" == "svn-diff" ]]; then
     git diff --diff-filter=MAD --no-prefix trunk > /tmp/r-trunk.patch
     mecho "SVN-compatible patch to trunk written to /tmp/r-trunk.patch:"
     git diff --diff-filter=MAD --no-prefix trunk
+    exit 0
 fi
 
 if [[ "$cmd" == "svn-patch" ]]; then
     patch -p0 < /tmp/r-trunk.patch
+    exit 0
 fi
+
+
+echo "ERROR: Unknown git r <command>: '$cmd'"
+exit 1
+
