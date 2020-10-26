@@ -53,15 +53,66 @@
 ### References:
 ### * https://bookdown.org/lionel/contributing/building-r.html
 ###
-### Version: 0.0.1-9004
+### Version: 0.0.1-9005
 ### Copyright: Henrik Bengtsson (2017-2020)
 ### License: GPL (>= 2.1) [https://www.gnu.org/licenses/gpl.html]
-function mecho() { echo "$@" 1>&2; }
+
+# -------------------------------------------------------------------------
+# Output utility functions
+# -------------------------------------------------------------------------
+function _tput() {
+    if [[ $theme == "none" ]]; then
+        return
+    fi
+    tput "$@" 2> /dev/null
+}
+
+function mecho() {
+    echo "$@" 1>&2;
+}
+
+function merror() {
+    {
+        _tput setaf 1 ## red
+        echo "ERROR: $*$info"
+        _tput sgr0    ## reset
+    } 1>&2
+    exit "${EXIT_CODE:-1}"
+}
+
+function mwarn() {
+    {
+        _tput setaf 3 ## yellow
+        echo "WARNING: $*"
+        _tput sgr0    ## reset
+    } 1>&2
+}
+function minfo() {
+    if ! $verbose; then
+        return
+    fi
+    {
+        _tput setaf 4 ## blue
+        echo "INFO: $*"
+        _tput sgr0    ## reset
+    } 1>&2
+}
+function mok() {
+    {
+        _tput setaf 2 ## green
+        echo "OK: $*"
+        _tput sgr0    ## reset
+    } 1>&2
+}
 
 function vecho() {
     if $verbose; then
         mecho "$@"
     fi
+}
+
+function chdir() {
+    cd "$1" || merror "Failed to change working directory: '$1'"
 }
 
 function version() {
@@ -96,41 +147,41 @@ fi
 while [[ $# -gt 0 ]]; do
     if [[ "$1" == "--help" ]]; then
         help
-	exit 0
+        exit 0
     elif [[ "$1" == "--version" ]]; then
         version
-	exit 0
+        exit 0
     elif [[ "$1" == "--verbose" ]]; then
         verbose=true
     elif [[ "$1" == "--no-verbose" ]]; then
-        verbose=false	
+        verbose=false        
     elif [[ "$1" == "--protect" ]]; then
         protect=true
     elif [[ "$1" == "--no-protect" ]]; then
-        protect=false	
+        protect=false        
     elif [[ "$1" == "--prefix-root" ]]; then
-	shift
+        shift
         prefix_root="$1"
     elif [[ "$1" == "--skip-svn-revision" ]]; then
-	skip_svn_revision=true
+        skip_svn_revision=true
     elif [[ "$1" == "configure" ]]; then
-	cmd="$1"
+        cmd="$1"
     elif [[ "$1" == "build" ]]; then
-	cmd="$1"
+        cmd="$1"
     elif [[ "$1" == "pull-recommended" ]]; then
-	cmd="$1"
+        cmd="$1"
     elif [[ "$1" == "build-recommended" ]]; then
-	cmd="$1"
+        cmd="$1"
     elif [[ "$1" == "svn-revision" ]]; then
-	cmd="$1"
+        cmd="$1"
     elif [[ "$1" == "install" ]]; then
-	cmd="$1"
+        cmd="$1"
     elif [[ "$1" == "prefix" ]]; then
-	cmd="$1"
+        cmd="$1"
     elif [[ "$1" == "svn-diff" ]]; then
-	cmd="$1"
+        cmd="$1"
     elif [[ "$1" == "svn-patch" ]]; then
-	cmd="$1"
+        cmd="$1"
     else
         opts="$opts $1"
     fi
@@ -146,7 +197,7 @@ function git_svn_revision() {
     suffix=""
     if [[ -z "$revision" ]]; then
         revision=$(git log --format=%B -n 50 | grep -F "git-svn-id" | head -1)
-	suffix="-9000"
+        suffix="-9000"
     fi
     revision=$(echo "$revision" | sed -E 's/.*git-svn-id: https:\/\/svn.r-project.org\/R\/[^@]*@([0-9]+).*/\1/')
     echo "$revision$suffix"
@@ -158,7 +209,7 @@ function git_date() {
 
 function update_svn_revision() {
     if [ ! -f SVN-REVISION ] || ! $skip_svn_revision; then
-	revision=$(git_svn_revision)
+        revision=$(git_svn_revision)
         printf "Revision: %s\nLast Changed Date: %s\n" "$revision" "$(git_date)" > SVN-REVISION
     fi
 }    
@@ -166,7 +217,7 @@ function update_svn_revision() {
 function add_make.SVN-REVISION() {
     {
         echo "#! /usr/bin/env bash"
-	echo
+        echo
         echo "## Don't edit - automatically added by git-r"
         echo      
         echo 'revision=$(git log --format=%B -n 1 | grep -F "git-svn-id")'
@@ -210,67 +261,98 @@ vecho "Prefix: $prefix"
 vecho "Build path: $build_path"
 
 if [[ ! -f src/library/base/DESCRIPTION.in ]]; then
-    echo "ERROR: Current folder does not look like it holds the R source code: $PWD"
-    exit 1
+    merror "Current folder does not look like it holds the R source code: $PWD"
 fi
 
 if [[ "$cmd" == "configure" ]]; then
     mkdir -p "$build_path"
-    cd "$build_path"
+     chdir "$build_path"
     ../../configure --prefix="$prefix" $opts
     sed -n '/^R is now configured/,/^## -----/p' config.log | head -n -2 > config.log.summary
+    EXIT_CODE=$?
+    if [[ ${EXIT_CODE} -ne 0 ]]; then
+        merror "Configuration failed with exit code ${EXIT_CODE}"
+    fi
+    mok "Configuration successful. See log file '${build_path}/config.log' and log summary '${build_path}/config.log.summary'"
     exit 0
-fi				    
+fi                                    
 
 if [[ "$cmd" == "svn-revision" ]]; then
     mkdir -p "$build_path"
-    cd "$build_path"
+    chdir "$build_path"
     update_svn_revision
+    EXIT_CODE=$?
     cat SVN-REVISION
+    if [[ ${EXIT_CODE} -ne 0 ]]; then
+        merror "Updating of SVN-REVISION failed with exit code ${EXIT_CODE}"
+    fi
+    minfo "Updating of SVN-REVISION successful"
     exit 0
-fi				    
+fi                                    
 
 if [[ "$cmd" == "pull-recommended" ]]; then
     mkdir -p "$build_path"
-    cd "$build_path"
+    chdir "$build_path"
     ../../tools/rsync-recommended
+    EXIT_CODE=$?
+    if [[ ${EXIT_CODE} -ne 0 ]]; then
+        merror "The download of recommended R packages failed with exit code ${EXIT_CODE}"
+    fi
+    mok "The download of recommended R packages successful"
     exit 0
 fi
 
 if [[ "$cmd" == "build" ]]; then
-    cd "$build_path"
+    chdir "$build_path"
     add_GNUmakefile
+    EXIT_CODE=$?
+    if [[ ${EXIT_CODE} -ne 0 ]]; then
+        merror "Creation of GNUmakefile failed with exit code ${EXIT_CODE}"
+    fi
 #    update_svn_revision
 #    (cd doc/manual && make front-matter html-non-svn)
     make
+    EXIT_CODE=$?
+    if [[ ${EXIT_CODE} -ne 0 ]]; then
+        merror "Building of R source code failed with exit code ${EXIT_CODE}"
+    fi
+    mok "Building of R source code successful."
     exit 0
-fi				    
+fi                                    
 
 if [[ "$cmd" == "build-recommended" ]]; then
     mkdir -p "$build_path"
-    cd "$build_path"
+    chdir "$build_path"
     ../../tools/rsync-recommended
+    EXIT_CODE=$?
+    if [[ ${EXIT_CODE} -ne 0 ]]; then
+        merror "The download of recommended R packages failed with exit code ${EXIT_CODE}"
+    fi
     make recommended
+    EXIT_CODE=$?
+    if [[ ${EXIT_CODE} -ne 0 ]]; then
+        merror "Building of recommended R packages failed with exit code ${EXIT_CODE}"
+    fi
+    mok "Building of recommended R packages successful"
     exit 0
 fi    
 
 
 if [[ "$cmd" == "install" ]]; then
-    cd "$build_path"
+    chdir "$build_path"
     chmod u+w -R "$prefix"
     make install
-    res=$?
-    if [[ $res -ne 0 ]]; then
-	echo "ERROR: R failed to install (exit code $res)"
-	exit $res
+    EXIT_CODE=$?
+    if [[ ${EXIT_CODE} -ne 0 ]]; then
+        merror "Installation of R failed with exit code $res"
     fi
     if $protect; then
-	mecho "Making installation read-only: $prefix"
+        minfo "Making installation read-only: $prefix"
         chmod ugo-w -R "$prefix"
     fi
-    echo "R successfully installed: $prefix"
+    mok "Installation of R successful: $prefix"
     exit 0
-fi				    
+fi
 
 if [[ "$cmd" == "prefix" ]]; then
     echo "$prefix"
@@ -280,7 +362,7 @@ fi
 if [[ "$cmd" == "svn-diff" ]]; then
     ## In Git repos
     git diff --diff-filter=MAD --no-prefix trunk > /tmp/r-trunk.patch
-    mecho "SVN-compatible patch to trunk written to /tmp/r-trunk.patch:"
+    mok "SVN-compatible patch to trunk written to /tmp/r-trunk.patch:"
     git diff --diff-filter=MAD --no-prefix trunk
     exit 0
 fi
@@ -291,6 +373,5 @@ if [[ "$cmd" == "svn-patch" ]]; then
 fi
 
 
-echo "ERROR: Unknown git r <command>: '$cmd'"
-exit 1
+merror "Unknown git r <command>: '$cmd'"
 

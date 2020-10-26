@@ -75,7 +75,7 @@ Required System Libraries:
 References:
 * https://bookdown.org/lionel/contributing/building-r.html
 
-Version: 0.0.1-9004
+Version: 0.0.1-9005
 Copyright: Henrik Bengtsson (2017-2020)
 License: GPL (>= 2.1) [https://www.gnu.org/licenses/gpl.html]
 ```
@@ -85,4 +85,4 @@ License: GPL (>= 2.1) [https://www.gnu.org/licenses/gpl.html]
 
 * Git
 * Bash
-* Compilers etc. required to build R from source
+* Everything else required to build R from source, e.g. configure, make, and compilers
