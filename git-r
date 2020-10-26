@@ -24,8 +24,8 @@
 ### Example:
 ###  git clone https://github.com/wch/r-source.git
 ###  cd r-source
-###  git checkout tags/R-3-6-3
-###  git svn-revision
+###  git checkout tags/R-4-0-3
+###  git r svn-revision
 ###
 ###  git checkout R-4-0-branch
 ###  git-r pull-recommended
