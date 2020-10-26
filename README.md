@@ -11,6 +11,12 @@ $ curl -O https://raw.githubusercontent.com/HenrikBengtsson/git-r/master/bin/git
 $ chmod ugo+x git-r
 ```
 
+If you add it to the `PATH`, then the `git` command will automatically find it and you can call it as:
+
+```sh
+$ git r ...
+```
+
 
 
 ## Full command-line help
