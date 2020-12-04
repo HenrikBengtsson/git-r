@@ -21,7 +21,7 @@ $ git r ...
 
 ## Full command-line help
 ```
-Git Fork Utility
+Git R: Build R From GitHub Source
 
 Usage:
  git-r [options]* <command>
@@ -75,7 +75,7 @@ Required System Libraries:
 References:
 * https://bookdown.org/lionel/contributing/building-r.html
 
-Version: 0.0.1-9005
+Version: 0.0.1-9006
 Copyright: Henrik Bengtsson (2017-2020)
 License: GPL (>= 2.1) [https://www.gnu.org/licenses/gpl.html]
 ```
