@@ -351,6 +351,7 @@ if [[ "$cmd" == "install" ]]; then
         chmod ugo-w -R "$prefix"
     fi
     mok "Installation of R successful: $prefix"
+    /home/hb/software/R-devel/trunk/bin/R --version | head -3
     exit 0
 fi
 
