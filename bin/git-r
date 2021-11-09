@@ -53,8 +53,8 @@
 ### References:
 ### * https://bookdown.org/lionel/contributing/building-r.html
 ###
-### Version: 0.0.1-9006
-### Copyright: Henrik Bengtsson (2017-2020)
+### Version: 0.0.1-9007
+### Copyright: Henrik Bengtsson (2017-2021)
 ### License: GPL (>= 2.1) [https://www.gnu.org/licenses/gpl.html]
 
 # -------------------------------------------------------------------------
@@ -130,6 +130,7 @@ function help() {
 
 
 ## Variables
+branch=
 prefix_root="$HOME/software/R-devel"
 build_root="./build"
 opts=
@@ -162,6 +163,9 @@ while [[ $# -gt 0 ]]; do
     elif [[ "$1" == "--prefix-root" ]]; then
         shift
         prefix_root="$1"
+    elif [[ "$1" == "--branch" ]]; then
+        shift
+        branch="$1"
     elif [[ "$1" == "--skip-svn-revision" ]]; then
         skip_svn_revision=true
     elif [[ "$1" == "configure" ]]; then
@@ -244,7 +248,7 @@ function add_GNUmakefile() {
     add_make.SVN-REVISION
 }
 
-branch=$(git_branch)
+branch=${branch:-$(git_branch)}
 prefix="$prefix_root/$branch"
 branch_flat=$(echo "$branch" | tr '/' '-')
 build_path="$build_root/$branch_flat"
