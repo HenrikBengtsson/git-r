@@ -86,3 +86,36 @@ License: GPL (>= 2.1) [https://www.gnu.org/licenses/gpl.html]
 * Git
 * Bash
 * Everything else required to build R from source, e.g. configure, make, and compilers
+
+
+### Ubuntu 22.04
+
+_(Last updated: 2022-12-19)_
+
+If you're on a fresh Ubuntu 22.04 system, here's what needs to be able to get started with `git-r`:
+
+```sh
+sudo apt install -y git curl
+```
+
+Then, to be able to configure and build R with its default, you need at a minimum:
+
+```r
+sudo apt install -y make
+sudo apt install -y gcc gfortran g++
+sudo apt install -y zlib1g-dev libbz-dev liblzma-dev
+sudo apt install -y libcurl4-gnutls-dev
+
+sudo apt install -y libreadline-dev  ## --with-readline=yes (default)
+sudo apt install -y libxt-dev        ## --with-x=yes (default)
+sudo apt install -y libpcre2-dev     ## unless --with-pcre1
+```
+
+For R to be able to produce PNG image files and also support internationalization (i18n), you need to install:
+
+```sh
+sudo apt install -y libpng-dev
+sudo apt install -y libicu-dev
+```
+
+
