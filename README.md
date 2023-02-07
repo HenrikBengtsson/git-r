@@ -103,7 +103,7 @@ Then, to be able to configure and build R with its default, you need at a minimu
 ```r
 sudo apt install -y make
 sudo apt install -y gcc gfortran g++
-sudo apt install -y zlib1g-dev libbz-dev liblzma-dev
+sudo apt install -y zlib1g-dev libbz2-dev liblzma-dev
 sudo apt install -y libcurl4-gnutls-dev
 
 sudo apt install -y libreadline-dev  ## --with-readline=yes (default)
@@ -117,5 +117,3 @@ For R to be able to produce PNG image files and also support internationalizatio
 sudo apt install -y libpng-dev
 sudo apt install -y libicu-dev
 ```
-
-
