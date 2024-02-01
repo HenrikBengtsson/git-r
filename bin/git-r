@@ -43,6 +43,11 @@
 ###  git-r svn-patch
 ###  svn diff
 ###
+###  git scan --what="R_*"
+###  git scan --what="_R_*"
+###  git scan --what="R_CHECK_*"
+###  git scan --what="_R_CHECK_*"
+###
 ### Required System Libraries:
 ### * Ubuntu 18.04:
 ###   sudo apt install xorg-dev libpcre2-dev libcurl4-openssl-dev
@@ -53,8 +58,8 @@
 ### References:
 ### * https://bookdown.org/lionel/contributing/building-r.html
 ###
-### Version: 0.0.1-9007
-### Copyright: Henrik Bengtsson (2017-2021)
+### Version: 0.0.1-9008
+### Copyright: Henrik Bengtsson (2017-2024)
 ### License: GPL (>= 2.1) [https://www.gnu.org/licenses/gpl.html]
 
 # -------------------------------------------------------------------------
@@ -133,11 +138,12 @@ function help() {
 branch=
 prefix_root="$HOME/software/R-devel"
 build_root="./build"
-opts=
+opts=()
 verbose=true
 cmd=help
 skip_svn_revision=false
 protect=true
+what=
 
 if [[ $# -eq 0 ]]; then
     help
@@ -186,11 +192,27 @@ while [[ $# -gt 0 ]]; do
         cmd="$1"
     elif [[ "$1" == "svn-patch" ]]; then
         cmd="$1"
+    elif [[ "$1" == "scan" ]]; then
+        cmd="$1"
+    ## Options (--key=value):
+    elif [[ "$1" =~ ^--.*=.*$ ]]; then
+        key=${1//--}
+        key=${key//=*}
+        value=${1//--[[:alpha:]]*=}
+        if [[ -z ${value} ]]; then
+            error "Option '--${key}' must not be empty"
+        fi
+        if [[ "${key}" == "what" ]]; then
+            what=${value}
+        else
+            opts+=("$1")
+        fi
     else
-        opts="$opts $1"
+        opts+=("$1")
     fi
     shift
 done
+
 
 function git_branch() {
     git symbolic-ref HEAD | sed 's!refs\/heads\/!!'
@@ -256,7 +278,7 @@ mkdir -p "$build_path"
 
 ## DEBUG DETAILS
 vecho "Command: $cmd"
-vecho "Options: $opts"
+vecho "Options: [n=${#opts[@]}] ${opts[*]}"
 vecho "Branch: $branch"
 vecho "Revision: $(git_svn_revision)"
 vecho "Date: $(git_date)"
@@ -270,8 +292,8 @@ fi
 
 if [[ "$cmd" == "configure" ]]; then
     mkdir -p "$build_path"
-     chdir "$build_path"
-    ../../configure --prefix="$prefix" $opts
+    chdir "$build_path"
+    ../../configure --prefix="$prefix" "${opts[@]}"
     sed -n '/^R is now configured/,/^## -----/p' config.log | head -n -2 > config.log.summary
     EXIT_CODE=$?
     if [[ ${EXIT_CODE} -ne 0 ]]; then
@@ -374,6 +396,32 @@ fi
 
 if [[ "$cmd" == "svn-patch" ]]; then
     patch -p0 < /tmp/r-trunk.patch
+    exit 0
+fi
+
+if [[ "$cmd" == "scan" ]]; then
+    if [[ -z "$what" ]]; then
+        merror "Option --what=<value> not specified"
+    fi
+
+    if [[ "$what" == "R_CHECK_*" ]]; then
+        pattern="\bR_CHECK_[[:upper:][:digit:]_]+\b"
+    elif [[ "$what" == "_R_CHECK_*" ]]; then
+        pattern="\b_R_CHECK_[[:upper:][:digit:]_]+\b"
+    elif [[ "$what" == "R_*" ]]; then
+        pattern="\bR_[[:upper:][:digit:]_]+\b"
+    elif [[ "$what" == "_R_*" ]]; then
+        pattern="\b_R_[[:upper:][:digit:]_]+\b"
+    else
+        merror "Don't know how to scan for --what=\"${what}\""
+    fi
+
+    if [[ ${#opts[@]} -eq 0 ]]; then
+        opts+=("--include=*.c")
+        opts+=("--include=*.R")
+    fi
+    
+    grep -E "${pattern}" -r "${opts[@]}" | sed -E "s/.*(${pattern}).*/\1/" | sort -u | uniq
     exit 0
 fi
 
