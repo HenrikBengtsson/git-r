@@ -39,6 +39,9 @@
 ###  git-r build
 ###  git-r install --protect
 ###
+###  git-r checkout 56b19d2be8
+###  git-r build --branch trunk
+###
 ###  git-r svn-diff
 ###  git-r svn-patch
 ###  svn diff
