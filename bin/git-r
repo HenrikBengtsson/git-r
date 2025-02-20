@@ -390,6 +390,7 @@ if [[ "$cmd" == "prefix" ]]; then
 fi
 
 if [[ "$cmd" == "svn-diff" ]]; then
+    unset GIT_EXTERNAL_DIFF
     ## In Git repos
     git diff --diff-filter=MAD --no-prefix trunk > /tmp/r-trunk.patch
     mok "SVN-compatible patch to trunk written to /tmp/r-trunk.patch:"
