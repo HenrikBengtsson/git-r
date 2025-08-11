@@ -22,12 +22,12 @@
 ###  --version              Display version
 ###
 ### Example:
-###  git clone https://github.com/wch/r-source.git
+###  git clone https://github.com/r-devel/r-svn.git
 ###  cd r-source
 ###  git checkout tags/R-4-0-3
 ###  git r svn-revision
 ###
-###  git checkout R-4-0-branch
+###  git checkout R-4-5-branch
 ###  git-r pull-recommended
 ###  git-r configure --enable-R-shlib --enable-memory-profiling
 ###  git-r build
@@ -59,10 +59,11 @@
 ###   sudo apt install openjdk-11-jdk
 ###
 ### References:
+### * The "official" git mirror of R SVN (https://github.com/r-devel/r-svn)
 ### * https://bookdown.org/lionel/contributing/building-r.html
 ###
-### Version: 0.0.1-9008
-### Copyright: Henrik Bengtsson (2017-2024)
+### Version: 0.0.1-9009
+### Copyright: Henrik Bengtsson (2017-2025)
 ### License: GPL (>= 2.1) [https://www.gnu.org/licenses/gpl.html]
 
 # -------------------------------------------------------------------------
@@ -431,4 +432,3 @@ fi
 
 
 merror "Unknown git r <command>: '$cmd'"
-

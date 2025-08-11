@@ -44,12 +44,12 @@ Options:
  --version              Display version
 
 Example:
- git clone https://github.com/wch/r-source.git
+ git clone https://github.com/r-devel/r-svn.git
  cd r-source
  git checkout tags/R-4-0-3
  git r svn-revision
 
- git checkout R-4-0-branch
+ git checkout R-4-5-branch
  git-r pull-recommended
  git-r configure --enable-R-shlib --enable-memory-profiling
  git-r build
@@ -61,9 +61,17 @@ Example:
  git-r build
  git-r install --protect
 
+ git-r checkout 56b19d2be8
+ git-r build --branch trunk
+
  git-r svn-diff
  git-r svn-patch
  svn diff
+
+ git scan --what="R_*"
+ git scan --what="_R_*"
+ git scan --what="R_CHECK_*"
+ git scan --what="_R_CHECK_*"
 
 Required System Libraries:
 * Ubuntu 18.04:
@@ -73,10 +81,11 @@ Required System Libraries:
   sudo apt install openjdk-11-jdk
 
 References:
+* The "official" git mirror of R SVN (https://github.com/r-devel/r-svn)
 * https://bookdown.org/lionel/contributing/building-r.html
 
-Version: 0.0.1-9006
-Copyright: Henrik Bengtsson (2017-2020)
+Version: 0.0.1-9009
+Copyright: Henrik Bengtsson (2017-2025)
 License: GPL (>= 2.1) [https://www.gnu.org/licenses/gpl.html]
 ```
 
@@ -86,34 +95,3 @@ License: GPL (>= 2.1) [https://www.gnu.org/licenses/gpl.html]
 * Git
 * Bash
 * Everything else required to build R from source, e.g. configure, make, and compilers
-
-
-### Ubuntu 22.04
-
-_(Last updated: 2022-12-19)_
-
-If you're on a fresh Ubuntu 22.04 system, here's what needs to be able to get started with `git-r`:
-
-```sh
-sudo apt install -y git curl
-```
-
-Then, to be able to configure and build R with its default, you need at a minimum:
-
-```r
-sudo apt install -y make
-sudo apt install -y gcc gfortran g++
-sudo apt install -y zlib1g-dev libbz2-dev liblzma-dev
-sudo apt install -y libcurl4-gnutls-dev
-
-sudo apt install -y libreadline-dev  ## --with-readline=yes (default)
-sudo apt install -y libxt-dev        ## --with-x=yes (default)
-sudo apt install -y libpcre2-dev     ## unless --with-pcre1
-```
-
-For R to be able to produce PNG image files and also support internationalization (i18n), you need to install:
-
-```sh
-sudo apt install -y libpng-dev
-sudo apt install -y libicu-dev
-```
