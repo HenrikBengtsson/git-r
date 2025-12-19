@@ -28,14 +28,16 @@ Usage:
 
 Commands:
  configure              Configure
- svn-revision           Update and display SVN-VERSION
- pull-recommended       Download (rsync) recommended packages
  build                  Update SVN-REVISION and runs 'make'
- build-recommended      Build recommended packages
  install
+ pull-recommended       Download recommended packages using rsync
+ build-recommended      Build recommended packages
+ scan=<search>          Search *.R and *.c files
  svn-diff               Generate a SVN-compatible patch
  svn-patch              Apply svn-diff patch to SVN repos
- prefix                 Output installation path
+ prefix                 Output installation details include prefix path
+ svn-revision           Update and display SVN-VERSION (rarely needed)
+ help                   Display this help
 
 Options:
  --prefix-root <path>   Installation directory.
@@ -84,7 +86,7 @@ References:
 * The "official" git mirror of R SVN (https://github.com/r-devel/r-svn)
 * https://bookdown.org/lionel/contributing/building-r.html
 
-Version: 0.0.1-9010
+Version: 0.0.1-9011
 Copyright: Henrik Bengtsson (2017-2025)
 License: GPL (>= 2.1) [https://www.gnu.org/licenses/gpl.html]
 ```
