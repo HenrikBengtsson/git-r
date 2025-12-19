@@ -44,11 +44,17 @@ Options:
  --version              Display version
 
 Example:
+ # Clone the "official" git mirror of the R source code
  git clone https://github.com/r-devel/r-svn.git
- cd r-source
- git checkout tags/R-4-0-3
- git r svn-revision
+ cd r-svn
 
+ # Build and install R-devel (without recommended packages)
+ git checkout main
+ git-r configure --enable-R-shlib --enable-memory-profiling --without-recommended-packages
+ git-r build
+ git-r install --protect
+
+ # Build and install latest R 4.5 (with recommended packages)
  git checkout R-4-5-branch
  git-r pull-recommended
  git-r configure --enable-R-shlib --enable-memory-profiling
@@ -56,18 +62,12 @@ Example:
  git-r build-recommended
  git-r install
 
- git checkout trunk
- git-r configure --enable-R-shlib --enable-memory-profiling --without-recommended-packages
- git-r build
- git-r install --protect
-
- git-r checkout 56b19d2be8
- git-r build --branch trunk
-
+ # Generate an SVN diff (useful for R BugZilla)
  git-r svn-diff
  git-r svn-patch
  svn diff
 
+ # Search all *.R and *.c files
  git scan --what="R_*"
  git scan --what="_R_*"
  git scan --what="R_CHECK_*"
@@ -84,7 +84,7 @@ References:
 * The "official" git mirror of R SVN (https://github.com/r-devel/r-svn)
 * https://bookdown.org/lionel/contributing/building-r.html
 
-Version: 0.0.1-9009
+Version: 0.0.1-9010
 Copyright: Henrik Bengtsson (2017-2025)
 License: GPL (>= 2.1) [https://www.gnu.org/licenses/gpl.html]
 ```
